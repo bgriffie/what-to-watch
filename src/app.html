@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en" data-app="what-to-watch">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>What to Watch</title>
+  <meta name="theme-color" content="#D9CDB4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Watch">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <style>
+/*@@PHOSPHOR_CSS@@*/
+    /* === tool-specific styles below === */
+
+    /* No title on the case: the screen starts right under the iOS clock (Floyd, from Phosphor OS) */
+    .app-header { display: none; }
+    .app { padding-top: max(var(--sp-2), calc(var(--safe-top) - 4px)); }
+    /* Pages swap instantly; nothing slides (Floyd) */
+    .view.enter-fwd, .view.enter-back { animation: none; }
+    /* Keys carry drawn icons, not font glyphs */
+    .app-controls .key svg { width: 20px; height: 20px; }
+    .ico { width: 18px; height: 18px; flex: none; }
+
+    /* Service filter / tabs */
+    .segmented.svc { margin-bottom: var(--sp-4); width: 100%; display: flex; }
+    .segmented.svc > button { flex: 1; min-width: 0; padding: 0 4px; }
+
+    /* Poster rows (Home, More like this) */
+    .shelf { margin-bottom: var(--sp-5); }
+    .shelf-h { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); margin: 0 0 var(--sp-2); }
+    .shelf-h h2 { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .1em; color: var(--text-dim); margin: 0; }
+    .shelf-h .hint { white-space: nowrap; }
+    .strip { display: flex; gap: var(--sp-3); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity;
+             margin: 0 calc(-1 * var(--sp-3)); padding: 0 var(--sp-3) var(--sp-2); scrollbar-width: none; }
+    .strip::-webkit-scrollbar { display: none; }
+    .strip .card { width: 108px; flex: none; scroll-snap-align: start; }
+    .strip-empty { color: var(--text-dim); font-size: var(--fs-sm); margin: 0; padding: var(--sp-3) 0; }
+
+    /* Poster grid (Browse, Search, My list) */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: var(--sp-4) var(--sp-3); }
+
+    .card { display: block; padding: 0; border: 0; background: none; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+    .poster { position: relative; aspect-ratio: 2 / 3; border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+              background: var(--surface-1); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(.85); }
+    .poster .ph { padding: var(--sp-2); font-size: var(--fs-xs); color: var(--text-dim); text-align: center; overflow-wrap: anywhere; }
+    .card:active .poster, .card:focus-visible .poster { border-color: var(--accent); box-shadow: var(--glow-box); }
+    .card .heart { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; color: var(--amber);
+                   filter: drop-shadow(0 0 3px #000); }
+    .card .t { margin-top: 6px; font-size: var(--fs-xs); line-height: 1.3; display: -webkit-box; -webkit-box-orient: vertical;
+               -webkit-line-clamp: 2; overflow: hidden; }
+    .card .tags { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+    .tag { font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 1px 4px; border: 1px solid currentColor;
+           border-radius: 2px; line-height: 1.3; text-transform: uppercase; }
+    .s-hulu { color: var(--accent); }
+    .s-prime { color: var(--cyan); }
+    .s-peacock { color: var(--amber); }
+    .s-none { color: var(--text-faint); }
+    .card.off { opacity: .55; }
+    .t-dim { color: var(--text-dim); }
+
+    /* Title page */
+    .ttl { display: grid; grid-template-columns: 112px 1fr; gap: var(--sp-4); align-items: start; margin-bottom: var(--sp-4); }
+    .ttl h1 { font-size: var(--fs-lg); line-height: 1.25; margin: 0 0 var(--sp-2); }
+    .ttl .facts { color: var(--text-dim); font-size: var(--fs-sm); line-height: 1.5; }
+    .overview { color: var(--text); font-size: var(--fs-sm); line-height: 1.55; margin: 0 0 var(--sp-4); }
+    .watch { display: grid; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+    .like-btn { gap: var(--sp-2); }
+    .like-btn[aria-pressed="true"] { color: var(--amber); border-color: var(--amber); }
+
+    .more-btn { margin-top: var(--sp-4); }
+    .status { color: var(--text-dim); font-size: var(--fs-sm); margin: var(--sp-3) 0; }
+    .status.err { color: var(--amber); }
+    .browse-f { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+    .browse-f .segmented { grid-column: 1 / -1; display: flex; }
+    .browse-f .segmented > button { flex: 1; }
+    .search { margin-bottom: var(--sp-4); }
+
+    /* First run */
+    .setup { max-width: 420px; margin: var(--sp-6) auto 0; text-align: center; }
+    .setup .glyph-svg { width: 64px; height: 64px; color: var(--accent); filter: drop-shadow(0 0 8px var(--accent)); margin: 0 auto var(--sp-4); display: block; }
+    .setup p { color: var(--text-dim); font-size: var(--fs-sm); line-height: 1.55; }
+    ol.steps { text-align: left; color: var(--text); font-size: var(--fs-sm); line-height: 1.6; padding-left: 1.4em; margin: 0 0 var(--sp-4); }
+    ol.steps a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <h1 class="app-title" data-view-title>What to Watch</h1>
+      <span class="app-meta">v1.0</span>
+    </header>
+    <div class="screen">
+      <canvas class="rain" aria-hidden="true" hidden></canvas>
+      <nav class="path" data-path aria-label="Location"></nav>
+      <div class="screen-body">
+
+      <section class="view" data-route="/" data-title="Watch">
+        <div id="home-setup" class="setup" hidden>
+          <svg class="glyph-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><rect x="3" y="5" width="18" height="12"/><path d="M10 8.5v5l4-2.5z" fill="currentColor"/><path d="M8 21h8"/></svg>
+          <h2>One key to go</h2>
+          <p>This app gets its film and show listings, and which service has them, from TMDB. It needs your own free TMDB API key, saved on this phone only.</p>
+          <button class="btn btn-primary btn-block" data-route="/settings/key">Add TMDB key</button>
+        </div>
+        <div id="home-main" hidden>
+          <div class="segmented svc" role="radiogroup" aria-label="Service" id="home-svc"></div>
+          <div id="home-rows"></div>
+        </div>
+      </section>
+
+      <section class="view" data-route="/browse" data-title="Browse">
+        <div class="browse-f">
+          <div class="segmented svc" role="radiogroup" aria-label="Service" id="br-svc" style="margin:0"></div>
+          <select class="select" id="br-type" aria-label="Films or shows">
+            <option value="movie">Films</option>
+            <option value="tv">Shows</option>
+          </select>
+          <select class="select" id="br-genre" aria-label="Genre"><option value="">All genres</option></select>
+          <select class="select" id="br-sort" aria-label="Sort" style="grid-column:1 / -1">
+            <option value="popular">Popular now</option>
+            <option value="top">Top rated</option>
+            <option value="new">Newest</option>
+          </select>
+        </div>
+        <div class="grid" id="br-grid"></div>
+        <p class="status" id="br-status" hidden></p>
+        <button class="btn btn-block more-btn" id="br-more" hidden>Load more</button>
+      </section>
+
+      <section class="view" data-route="/search" data-title="Search">
+        <form class="search" id="q-form" role="search">
+          <input class="input" type="search" id="q" placeholder="Film or show" aria-label="Search films and shows"
+                 autocomplete="off" autocorrect="off" enterkeyhint="search">
+        </form>
+        <div class="grid" id="q-grid"></div>
+        <p class="status" id="q-status" hidden></p>
+      </section>
+
+      <section class="view" data-route="/liked" data-title="My list">
+        <p class="hint" style="margin:0 0 var(--sp-4)">Titles you ♥ shape the "For you" row on Home.</p>
+        <div class="grid" id="liked-grid"></div>
+        <div class="empty" id="liked-empty" hidden>
+          <pre aria-hidden="true">  ___
+ | ♥ |
+ |___|</pre>
+          <p>Nothing here yet. Open any title and tap ♥.</p>
+        </div>
+      </section>
+
+      <section class="view" data-route="/title" data-title="Title">
+        <div id="tt"></div>
+      </section>
+
+      <section class="view" data-route="/settings" data-title="Settings">
+        <div class="menu-group">
+          <span class="label">General</span>
+          <div class="menu">
+            <a class="menu-item" href="#/settings/key"><span class="mi-label">TMDB key</span><span class="mi-value" id="key-state">Not set</span></a>
+            <a class="menu-item" href="#/settings/services"><span class="mi-label">My services</span><span class="mi-value" id="svc-state"></span></a>
+            <label class="menu-item"><span class="mi-label">Posters<small>Turn off to save data</small></span><input type="checkbox" role="switch" class="mi-switch" data-setting="posters"></label>
+          </div>
+        </div>
+        <div class="menu-group">
+          <span class="label">Appearance</span>
+          <div class="menu">
+            <a class="menu-item" href="#/settings/display"><span class="mi-label">Display</span><span class="mi-value">CRT <span data-setting-value="crt"></span></span></a>
+          </div>
+        </div>
+        <div class="menu-group">
+          <span class="label">Data</span>
+          <div class="menu">
+            <button class="menu-item" id="export"><span class="mi-label">Export my list</span></button>
+            <button class="menu-item" id="clear-cache"><span class="mi-label">Refresh listings</span></button>
+            <button class="menu-item danger" id="erase"><span class="mi-label">Erase all data</span></button>
+          </div>
+          <p class="menu-note">Your key and list stay on this phone.</p>
+        </div>
+        <div class="menu-group">
+          <span class="label">About</span>
+          <div class="menu">
+            <a class="menu-item" href="#/settings/about"><span class="mi-label">About</span><span class="mi-value">v1.0</span></a>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" data-route="/settings/key" data-title="TMDB key">
+        <ol class="steps">
+          <li>Make a free account at <a href="https://www.themoviedb.org/signup" target="_blank" rel="noopener">themoviedb.org</a>.</li>
+          <li>Open <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">Settings › API</a> and create a Developer key.</li>
+          <li>Copy the <b>API Key</b> (or the long Read Access Token) and paste it here.</li>
+        </ol>
+        <form class="field" id="key-form">
+          <label class="label" for="key-in">API key</label>
+          <input class="input" id="key-in" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="Paste key">
+          <p class="hint" id="key-hint">Saved on this phone only.</p>
+        </form>
+        <button class="btn btn-primary btn-block" id="key-save">Save and test</button>
+      </section>
+
+      <section class="view" data-route="/settings/services" data-title="My services">
+        <div class="menu">
+          <label class="menu-item"><span class="mi-label"><span class="tag s-hulu">Hulu</span></span><input type="checkbox" role="switch" class="mi-switch" data-setting="svc_hulu"></label>
+          <label class="menu-item"><span class="mi-label"><span class="tag s-prime">Prime</span> Prime Video</span><input type="checkbox" role="switch" class="mi-switch" data-setting="svc_prime"></label>
+          <label class="menu-item"><span class="mi-label"><span class="tag s-peacock">Peacock</span></span><input type="checkbox" role="switch" class="mi-switch" data-setting="svc_peacock"></label>
+        </div>
+        <p class="menu-note">Region: United States. Peacock listings include Premium titles, which may need an upgrade on the free plan.</p>
+      </section>
+
+      <section class="view" data-route="/settings/display" data-title="Display">
+        <div class="menu">
+          <label class="menu-item"><span class="mi-label">CRT scanlines</span><input type="checkbox" role="switch" class="mi-switch" data-setting="crt"></label>
+          <label class="menu-item"><span class="mi-label">Matrix rain</span><input type="checkbox" role="switch" class="mi-switch" data-setting="rain"></label>
+        </div>
+      </section>
+
+      <section class="view" data-route="/settings/about" data-title="About">
+        <section class="panel" data-title="What to Watch">
+          <div class="kv"><span>Version</span><span>1.0</span></div>
+          <div class="kv"><span>Works offline</span><span class="t-accent">Last listings</span></div>
+          <div class="kv"><span>Region</span><span>US</span></div>
+          <div class="kv"><span>Data</span><span>On this phone</span></div>
+        </section>
+        <p class="hint" style="margin-top:var(--sp-4);line-height:1.5">Listings and streaming availability come from TMDB, with availability data from JustWatch. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+      </section>
+      </div><!-- /.screen-body -->
+    </div><!-- /.screen -->
+    <nav class="app-controls" aria-label="Controls">
+      <button class="key key-sm" data-back aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" aria-hidden="true"><path d="M15 4 7 12l8 8"/></svg></button>
+      <button class="key key-sm" data-open-sheet="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <div class="page-keys" data-show-on="/title" hidden><button class="key key-sm" id="k-like" aria-label="Add to my list" aria-pressed="false"></button></div>
+      <button class="key key-sm" data-route="/search" data-hide-on="/title /search" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg></button>
+      <button class="key key-sm" data-route="/" data-show-on="/search" hidden aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" aria-hidden="true"><path d="M3 11 12 4l9 7M6 9.5V20h12V9.5"/></svg></button>
+    </nav>
+  </main>
+
+  <dialog class="sheet dropdown" id="menu" aria-label="Menu">
+    <div class="sheet-title">Go to</div>
+    <div class="menu" data-sections>
+      <button class="menu-item" data-route="/"><span class="mi-glyph" aria-hidden="true">■</span><span class="mi-label">Home</span></button>
+      <button class="menu-item" data-route="/browse"><span class="mi-glyph" aria-hidden="true">▤</span><span class="mi-label">Browse</span></button>
+      <button class="menu-item" data-route="/search"><span class="mi-glyph" aria-hidden="true">›</span><span class="mi-label">Search</span></button>
+      <button class="menu-item" data-route="/liked"><span class="mi-glyph" aria-hidden="true">♥</span><span class="mi-label">My list</span><span class="mi-count" id="liked-count" hidden></span></button>
+      <button class="menu-item" data-route="/settings"><span class="mi-glyph" aria-hidden="true">⚙</span><span class="mi-label">Settings</span></button>
+    </div>
+  </dialog>
+
+  <div class="toast-host" aria-live="polite"></div>
+  <script>
+/*@@PHOSPHOR_JS@@*/
+  </script>
+  <script>
+/*@@APP_JS@@*/
+  </script>
+</body>
+</html>
