@@ -92,7 +92,7 @@
   <main class="app">
     <header class="app-header">
       <h1 class="app-title" data-view-title>What to Watch</h1>
-      <span class="app-meta">v1.0</span>
+      <span class="app-meta">v1.1</span>
     </header>
     <div class="screen">
       <canvas class="rain" aria-hidden="true" hidden></canvas>
@@ -107,6 +107,10 @@
           <button class="btn btn-primary btn-block" data-route="/settings/key">Add TMDB key</button>
         </div>
         <div id="home-main" hidden>
+          <form class="search" id="home-q-form" role="search">
+            <input class="input" type="search" id="home-q" placeholder="Search films, shows, actors" aria-label="Search across your services"
+                   autocomplete="off" autocorrect="off" enterkeyhint="search">
+          </form>
           <div class="segmented svc" role="radiogroup" aria-label="Service" id="home-svc"></div>
           <div id="home-rows"></div>
         </div>
@@ -133,11 +137,12 @@
 
       <section class="view" data-route="/search" data-title="Search">
         <form class="search" id="q-form" role="search">
-          <input class="input" type="search" id="q" placeholder="Film or show" aria-label="Search films and shows"
+          <input class="input" type="search" id="q" placeholder="Search films, shows, actors" aria-label="Search films, shows and actors"
                  autocomplete="off" autocorrect="off" enterkeyhint="search">
         </form>
-        <div class="grid" id="q-grid"></div>
         <p class="status" id="q-status" hidden></p>
+        <div class="grid" id="q-grid"></div>
+        <div id="q-more" style="margin-top:var(--sp-5)"></div>
       </section>
 
       <section class="view" data-route="/liked" data-title="My list">
@@ -161,6 +166,7 @@
           <div class="menu">
             <a class="menu-item" href="#/settings/key"><span class="mi-label">TMDB key</span><span class="mi-value" id="key-state">Not set</span></a>
             <a class="menu-item" href="#/settings/services"><span class="mi-label">My services</span><span class="mi-value" id="svc-state"></span></a>
+            <a class="menu-item" href="#/settings/services"><span class="mi-label">Peacock plan</span><span class="mi-value" id="plan-state"></span></a>
             <label class="menu-item"><span class="mi-label">Posters<small>Turn off to save data</small></span><input type="checkbox" role="switch" class="mi-switch" data-setting="posters"></label>
           </div>
         </div>
@@ -182,7 +188,7 @@
         <div class="menu-group">
           <span class="label">About</span>
           <div class="menu">
-            <a class="menu-item" href="#/settings/about"><span class="mi-label">About</span><span class="mi-value">v1.0</span></a>
+            <a class="menu-item" href="#/settings/about"><span class="mi-label">About</span><span class="mi-value">v1.1</span></a>
           </div>
         </div>
       </section>
@@ -207,7 +213,14 @@
           <label class="menu-item"><span class="mi-label"><span class="tag s-prime">Prime</span> Prime Video</span><input type="checkbox" role="switch" class="mi-switch" data-setting="svc_prime"></label>
           <label class="menu-item"><span class="mi-label"><span class="tag s-peacock">Peacock</span></span><input type="checkbox" role="switch" class="mi-switch" data-setting="svc_peacock"></label>
         </div>
-        <p class="menu-note">Region: United States. Peacock listings include Premium titles, which may need an upgrade on the free plan.</p>
+        <div class="menu-group" style="margin-top:var(--sp-5)">
+          <span class="label">Peacock plan</span>
+          <div class="menu" role="radiogroup">
+            <button class="menu-item" role="radio" data-setting="peacockPlan" data-value="free"><span class="mi-label">Free<small>Only titles free with ads</small></span></button>
+            <button class="menu-item" role="radio" data-setting="peacockPlan" data-value="premium"><span class="mi-label">Premium<small>Pick this if Peacock comes with a bundle, e.g. Xfinity</small></span></button>
+          </div>
+        </div>
+        <p class="menu-note">Region: United States. Only titles included with your plans are shown; rentals and purchases are left out.</p>
       </section>
 
       <section class="view" data-route="/settings/display" data-title="Display">
@@ -219,12 +232,12 @@
 
       <section class="view" data-route="/settings/about" data-title="About">
         <section class="panel" data-title="What to Watch">
-          <div class="kv"><span>Version</span><span>1.0</span></div>
+          <div class="kv"><span>Version</span><span>1.1</span></div>
           <div class="kv"><span>Works offline</span><span class="t-accent">Last listings</span></div>
           <div class="kv"><span>Region</span><span>US</span></div>
           <div class="kv"><span>Data</span><span>On this phone</span></div>
         </section>
-        <p class="hint" style="margin-top:var(--sp-4);line-height:1.5">Listings and streaming availability come from TMDB, with availability data from JustWatch. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+        <p class="hint" style="margin-top:var(--sp-4);line-height:1.5">Listings and streaming availability come from TMDB, with availability data from JustWatch. Links straight to a title on Hulu, Prime Video and Peacock come from Wikidata. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
       </section>
       </div><!-- /.screen-body -->
     </div><!-- /.screen -->
